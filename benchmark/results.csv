@@ -1,0 +1,9 @@
+condition,trial,ref_facephys_bpm,facephys_bpm,ref_pulse_bpm,pulse_bpm
+good_light,1,,,,
+good_light,2,,,,
+dim_light,1,,,,
+dim_light,2,,,,
+moving_talking,1,,,,
+moving_talking,2,,,,
+after_exercise,1,,,,
+after_exercise,2,,,,

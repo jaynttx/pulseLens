@@ -1,0 +1,17 @@
+# Node
+node_modules/
+dist/
+.vite/
+# Python
+__pycache__/
+*.pyc
+.venv/
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Claude Code
+.claude/
+# Benchmark outputs (regenerate with analyze.py)
+benchmark/output/

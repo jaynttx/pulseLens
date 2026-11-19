@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#070b16">
+    <link rel="apple-touch-icon" href="./resource/icon-192.png">
+    <title>PulseLens</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg: #070b16;
+            --bg-2: #0a1020;
+            --card: rgba(13, 20, 36, 0.72);
+            --well: #0d1424;
+            --border: rgba(148, 163, 184, 0.14);
+            --border-strong: rgba(148, 163, 184, 0.26);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+            --dim: #64748b;
+            --heart: #ff4d6d;
+            --cyan: #22d3ee;
+            --violet: #a78bfa;
+            --green: #34d399;
+            --amber: #fbbf24;
+            --radius: 18px;
+            --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            --mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+            --shadow: 0 10px 40px -12px rgba(0, 0, 0, 0.6), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+        }
+
+        * { box-sizing: border-box; }
+        html { color-scheme: dark; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(900px 600px at 8% -10%, rgba(255, 77, 109, 0.16), transparent 60%),
+                radial-gradient(800px 600px at 100% 0%, rgba(34, 211, 238, 0.12), transparent 60%),
+                radial-gradient(900px 700px at 50% 110%, rgba(167, 139, 250, 0.12), transparent 60%);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* ---------- Top bar ---------- */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(7, 11, 22, 0.72);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar-inner {
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .logo {
+            width: 40px; height: 40px; flex-shrink: 0;
+            border-radius: 12px;
+            display: grid; place-items: center;
+            background: linear-gradient(135deg, var(--heart), var(--violet));
+            box-shadow: 0 6px 20px -4px rgba(255, 77, 109, 0.55);
+            color: #fff; font-size: 18px;
+        }
+        .brand-text { min-width: 0; }
+        .brand-name { font-weight: 800; font-size: 18px; letter-spacing: -0.02em; line-height: 1.1; }
+        .brand-name span { background: linear-gradient(90deg, #fff, #ffc2cd); -webkit-background-clip: text; background-clip: text; color: transparent; }
+        .brand-sub { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+        .pill {
+            display: inline-flex; align-items: center; gap: 7px;
+            height: 32px; padding: 0 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 12px; font-weight: 500; color: var(--muted);
+            white-space: nowrap;
+        }
+        .pill i { font-size: 11px; }
+        .pill.private i { color: var(--green); }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); position: relative; }
+        .status-pill.measuring { color: #ffd1da; border-color: rgba(255, 77, 109, 0.4); background: rgba(255, 77, 109, 0.1); }
+        .status-pill.measuring .status-dot { background: var(--heart); }
+        .status-pill.measuring .status-dot::after {
+            content: ""; position: absolute; inset: 0; border-radius: 50%;
+            background: var(--heart); animation: ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping { 75%, 100% { transform: scale(2.6); opacity: 0; } }
+
+        .icon-btn {
+            height: 34px; padding: 0 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            font: 600 13px var(--font);
+            display: inline-flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s, transform .1s;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.09); border-color: rgba(148, 163, 184, 0.4); }
+        .icon-btn:active { transform: translateY(1px); }
+        .icon-btn:focus-visible, .layer-btn:focus-visible, #saveBtn:focus-visible, #largeStartBtn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        /* ---------- Layout ---------- */
+        .container { max-width: 1320px; margin: 0 auto; padding: 22px 20px 40px; }
+        .main-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 410px;
+            gap: 20px;
+            align-items: start;
+        }
+        .col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+        .card {
+            position: relative;
+            background: var(--card);
+            backdrop-filter: blur(18px) saturate(140%);
+            -webkit-backdrop-filter: blur(18px) saturate(140%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px;
+        }
+        .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+        .card-title { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: 0.01em; display: flex; align-items: center; gap: 8px; }
+        .card-title i { color: var(--muted); font-size: 13px; }
+        .card-head .spacer { flex: 1; }
+        .eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); font-weight: 600; }
+
+        /* Tooltips */
+        .tip {
+            position: relative;
+            width: 20px; height: 20px; flex-shrink: 0;
+            border-radius: 50%;
+            border: 1px solid var(--border-strong);
+            color: var(--muted);
+            font: 700 11px var(--font);
+            display: inline-grid; place-items: center;
+            cursor: help;
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .tip::after {
+            content: attr(data-tip);
+            position: absolute;
+            top: calc(100% + 8px); right: -6px;
+            width: 260px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #111a2e;
+            border: 1px solid var(--border-strong);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            color: var(--text);
+            font: 400 12px/1.5 var(--font);
+            text-align: left;
+            opacity: 0; transform: translateY(-4px);
+            pointer-events: none;
+            transition: opacity .15s, transform .15s;
+            z-index: 60;
+            white-space: normal;
+        }
+        .tip:hover::after, .tip:focus::after { opacity: 1; transform: translateY(0); }
+        .tip:hover, .tip:focus { color: var(--text); border-color: var(--cyan); outline: none; }
+
+        /* ---------- Camera card ---------- */
+        .camera-card { padding: 14px; }
+        #video-frame {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            position: relative;
+            background: radial-gradient(circle at 50% 45%, #111c33, #060a14 75%);
+            overflow: hidden;
+            border-radius: 14px;
+            display: flex; justify-content: center; align-items: center;
+            border: 1px solid var(--border);
+        }
+        canvas.display-layer {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            min-width: 100%; min-height: 100%;
+            object-fit: cover;
+        }
+        .bracket { position: absolute; width: 34px; height: 34px; z-index: 5; pointer-events: none; border-color: rgba(34, 211, 238, 0.75); border-style: solid; border-width: 0; }
+        .bracket.tl { top: 14px; left: 14px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 10px; }
+        .bracket.tr { top: 14px; right: 14px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 10px; }
+        .bracket.bl { bottom: 14px; left: 14px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 10px; }
+        .bracket.br { bottom: 14px; right: 14px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 10px; }
+
+        .hud { position: absolute; top: 20px; left: 58px; right: 58px; z-index: 6; display: flex; justify-content: space-between; pointer-events: none; }
+        .hud-chip {
+            display: inline-flex; align-items: center; gap: 7px;
+            height: 28px; padding: 0 11px;
+            border-radius: 999px;
+            background: rgba(7, 11, 22, 0.62);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font: 600 11px var(--mono);
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+        .hud-chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+        .hud-chip.live { color: #fff; border-color: rgba(255, 77, 109, 0.5); }
+        .hud-chip.live .dot { background: var(--heart); box-shadow: 0 0 10px var(--heart); animation: blink 1.2s ease-in-out infinite; }
+        @keyframes blink { 50% { opacity: 0.35; } }
+
+        .idle-overlay {
+            position: absolute; inset: 0; z-index: 4;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+            color: var(--muted); text-align: center; padding: 20px;
+            pointer-events: none;
+            transition: opacity .3s;
+        }
+        .idle-overlay .ring {
+            width: 84px; height: 84px; border-radius: 50%;
+            display: grid; place-items: center;
+            border: 1px dashed rgba(34, 211, 238, 0.4);
+            color: var(--cyan); font-size: 30px;
+            background: rgba(34, 211, 238, 0.05);
+        }
+        .idle-overlay .t1 { color: var(--text); font-weight: 600; font-size: 15px; }
+        .idle-overlay .t2 { font-size: 12.5px; max-width: 320px; }
+        body.is-measuring .idle-overlay { opacity: 0; visibility: hidden; }
+        .idle-overlay .off-view { display: contents; }
+        .idle-overlay .paused-view { display: none; }
+        body.is-paused .idle-overlay {
+            background: rgba(7, 11, 22, 0.65);
+            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        }
+        body.is-paused .idle-overlay .off-view { display: none; }
+        body.is-paused .idle-overlay .paused-view { display: contents; }
+        .idle-overlay .ring.pause { border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(255, 255, 255, 0.1); color: #fff; }
+        body.is-paused .idle-overlay .t1 { color: #fff; font-size: 18px; font-weight: 700; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6); }
+        body.is-paused .idle-overlay .t2 { color: #e2e8f0; font-size: 13.5px; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6); }
+        .card-title, .viz-label, .tile-label, .eyebrow, .brand, .layer-btn { user-select: none; -webkit-user-select: none; }
+
+        .wave-head { display: flex; align-items: center; gap: 10px; margin: 14px 4px 10px; }
+        #wave-frame {
+            height: 120px;
+            position: relative;
+            background: var(--well);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        /* Start button (main.js toggles display between none and block, and sets its text) */
+        #largeStartBtn {
+            position: absolute;
+            z-index: 50;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: block;
+            height: 50px;
+            padding: 0 30px 0 26px;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ff4d6d 0%, #ff6b8b 45%, #a78bfa 100%);
+            color: #fff;
+            font: 700 15px var(--font);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 10px 30px -6px rgba(255, 77, 109, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+            transition: transform .15s, box-shadow .2s, filter .2s;
+        }
+        #largeStartBtn::before {
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            content: "\f04b";
+            margin-right: 10px;
+            font-size: 13px;
+            display: inline-block;
+        }
+        #largeStartBtn:hover:not(:disabled) { transform: translate(-50%, -50%) scale(1.04); box-shadow: 0 14px 36px -6px rgba(255, 77, 109, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.18) inset; }
+        #largeStartBtn:active:not(:disabled) { transform: translate(-50%, -50%) scale(0.98); }
+        #largeStartBtn:disabled {
+            cursor: wait;
+            background: linear-gradient(135deg, #1e293b, #273449);
+            color: var(--muted);
+            box-shadow: 0 0 0 1px var(--border-strong) inset;
+        }
+        #largeStartBtn:disabled::before { content: "\f110"; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        canvas { width: 100%; height: 100%; display: block; }
+
+        /* ---------- Heart rate hero ---------- */
+        .hero {
+            overflow: hidden;
+            background:
+                radial-gradient(420px 220px at 100% 0%, rgba(255, 77, 109, 0.18), transparent 70%),
+                var(--card);
+        }
+        .hero-body { display: flex; align-items: center; gap: 18px; }
+        .heart-wrap { position: relative; width: 92px; height: 92px; flex-shrink: 0; display: grid; place-items: center; }
+        .heart-wrap .ripple {
+            position: absolute; inset: 8px; border-radius: 50%;
+            border: 2px solid rgba(255, 77, 109, 0.55);
+            opacity: 0;
+        }
+        .heart-wrap .glow { position: absolute; inset: 14px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 77, 109, 0.35), transparent 70%); }
+        .heart-icon { position: relative; font-size: 50px; color: #3a4459; transition: color .4s; filter: drop-shadow(0 0 0 transparent); }
+        .beating .heart-icon { color: var(--heart); filter: drop-shadow(0 6px 18px rgba(255, 77, 109, 0.6)); animation: heartbeat var(--beat, 1s) ease-in-out infinite; }
+        .beating .ripple { animation: ripple var(--beat, 1s) ease-out infinite; }
+        @keyframes heartbeat {
+            0%   { transform: scale(1); }
+            14%  { transform: scale(1.18); }
+            28%  { transform: scale(0.98); }
+            42%  { transform: scale(1.1); }
+            70%, 100% { transform: scale(1); }
+        }
+        @keyframes ripple { 0% { transform: scale(0.7); opacity: 0.8; } 100% { transform: scale(1.45); opacity: 0; } }
+
+        .bpm-block { min-width: 0; }
+        .bpm-line { display: flex; align-items: baseline; gap: 8px; }
+        #hrVal {
+            font-family: var(--mono);
+            font-size: 64px; font-weight: 800;
+            line-height: 1; letter-spacing: -0.04em;
+            color: #3e4a60;
+            transition: color .3s, text-shadow .3s;
+            font-variant-numeric: tabular-nums;
+        }
+        #hrVal.active { color: #fff; text-shadow: 0 0 28px rgba(255, 77, 109, 0.45); }
+        .bpm-unit { font: 700 14px var(--mono); color: var(--heart); letter-spacing: 0.06em; }
+        .zone {
+            margin-top: 10px;
+            display: inline-flex; align-items: center; gap: 6px;
+            height: 26px; padding: 0 10px;
+            border-radius: 999px;
+            font-size: 12px; font-weight: 600;
+            border: 1px solid var(--border);
+            color: var(--muted);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .zone .zdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+        .zone.low { color: var(--cyan); border-color: rgba(34, 211, 238, 0.35); background: rgba(34, 211, 238, 0.08); }
+        .zone.normal { color: var(--green); border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.08); }
+        .zone.elevated { color: var(--amber); border-color: rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.08); }
+        .zone.high { color: var(--heart); border-color: rgba(255, 77, 109, 0.4); background: rgba(255, 77, 109, 0.1); }
+
+        .session { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+        .session div {
+            padding: 9px 10px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+        }
+        .session b { display: block; font: 700 17px var(--mono); color: var(--text); font-variant-numeric: tabular-nums; }
+        .session span { font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.07em; font-weight: 600; }
+        .reset-btn {
+            height: 26px; padding: 0 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border-strong);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            font: 600 11.5px var(--font);
+            display: inline-flex; align-items: center; gap: 6px;
+            cursor: pointer;
+            transition: color .2s, background .2s, border-color .2s;
+        }
+        .reset-btn i { font-size: 10px; }
+        .reset-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.09); border-color: rgba(148, 163, 184, 0.4); }
+        .reset-btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .footnote { margin-top: 12px; font-size: 11.5px; color: var(--dim); }
+
+        /* ---------- Stat tiles ---------- */
+        .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .tile { padding: 14px 15px; }
+        .tile-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .tile-label { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); font-weight: 500; }
+        .tile-label i { font-size: 12px; }
+        .tile-val { font: 700 24px var(--mono); color: var(--text); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; line-height: 1.15; }
+        .tile-val small { font-size: 12px; color: var(--dim); font-weight: 600; margin-left: 3px; }
+        .i-cyan { color: var(--cyan); } .i-violet { color: var(--violet); } .i-green { color: var(--green); } .i-heart { color: var(--heart); }
+        .sqi-bar { margin-top: 10px; height: 6px; border-radius: 999px; background: rgba(148, 163, 184, 0.14); overflow: hidden; }
+        .sqi-fill { height: 100%; width: 0%; border-radius: 999px; background: var(--heart); transition: width .4s ease, background-color .4s; }
+        .sqi-text { margin-top: 7px; font-size: 11.5px; font-weight: 600; color: var(--dim); }
+        .sqi-good .sqi-fill { background: var(--green); } .sqi-good .sqi-text { color: var(--green); }
+        .sqi-fair .sqi-fill { background: var(--amber); } .sqi-fair .sqi-text { color: var(--amber); }
+        .sqi-poor .sqi-fill { background: var(--heart); } .sqi-poor .sqi-text { color: var(--heart); }
+
+        /* ---------- Canvases in wells ---------- */
+        .well { background: var(--well); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; position: relative; }
+        #psd-frame { height: 190px; }
+
+        /* ---------- Inside the model ---------- */
+        .section { margin-top: 20px; }
+        .layer-tabs {
+            display: inline-flex; gap: 4px; padding: 4px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .layer-btn {
+            padding: 7px 14px;
+            border-radius: 9px;
+            font: 600 12.5px var(--font);
+            color: var(--muted);
+            cursor: pointer;
+            user-select: none;
+            transition: background .2s, color .2s;
+        }
+        .layer-btn:hover { color: var(--text); background: rgba(255, 255, 255, 0.05); }
+        .layer-btn.active { color: #fff; background: linear-gradient(135deg, rgba(167, 139, 250, 0.38), rgba(34, 211, 238, 0.24)); box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.45) inset; }
+
+        .viz-grid { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 14px; }
+        .viz { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .viz-label { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); font-weight: 500; }
+        .viz-label i { font-size: 11px; }
+        .viz-cell { height: 230px; }
+
+        /* ---------- Trend ---------- */
+        .trend-row { display: flex; gap: 10px; }
+        .trend-y-axis { width: 34px; height: 170px; position: relative; flex-shrink: 0; }
+        .axis-label {
+            position: absolute; right: 2px;
+            font: 600 11px var(--mono);
+            color: var(--dim);
+            transform: translateY(50%);
+        }
+        #trend-container { flex: 1; height: 170px; }
+
+        #saveBtn {
+            height: 36px; padding: 0 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(34, 211, 238, 0.4);
+            background: rgba(34, 211, 238, 0.08);
+            color: #a5f3fc;
+            font: 600 13px var(--font);
+            display: inline-flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            transition: background .2s, border-color .2s;
+        }
+        #saveBtn:hover { background: rgba(34, 211, 238, 0.16); border-color: var(--cyan); }
+        #saveBtn small { font-family: var(--mono); color: var(--muted); font-weight: 600; }
+
+        .page-foot { margin-top: 26px; text-align: center; font-size: 12px; color: var(--dim); }
+
+        /* ---------- Modal ---------- */
+        .modal {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+            background: rgba(3, 6, 14, 0.6);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            opacity: 0; visibility: hidden;
+            transition: opacity .2s, visibility .2s;
+        }
+        .modal.open { opacity: 1; visibility: visible; }
+        .modal-box {
+            width: 100%; max-width: 680px; max-height: calc(100vh - 40px);
+            overflow-y: auto;
+            background: linear-gradient(180deg, #111a2e, #0b1222);
+            border: 1px solid var(--border-strong);
+            border-radius: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            padding: 26px;
+            transform: translateY(10px) scale(0.98);
+            transition: transform .2s;
+        }
+        .modal.open .modal-box { transform: none; }
+        .modal-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+        .modal-head h2 { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+        .modal-close {
+            margin-left: auto; width: 36px; height: 36px; border-radius: 10px;
+            border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.04);
+            color: var(--muted); cursor: pointer; font-size: 15px;
+        }
+        .modal-close:hover { color: #fff; background: rgba(255, 255, 255, 0.09); }
+        .modal-box p { color: #cbd5e1; margin: 0 0 12px; font-size: 14px; }
+        .modal-box h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--dim); margin: 20px 0 10px; }
+
+        .pipeline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .step {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 10px; border-radius: 9px;
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+            font-size: 12px; font-weight: 600; color: var(--text);
+        }
+        .step i { font-size: 11px; color: var(--muted); }
+        .step.hl { background: linear-gradient(135deg, rgba(255, 77, 109, 0.25), rgba(167, 139, 250, 0.25)); border-color: rgba(255, 77, 109, 0.5); }
+        .step.hl i { color: #fff; }
+        .arrow { color: var(--dim); font-size: 11px; }
+
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .feature { padding: 12px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); }
+        .feature b { display: flex; align-items: center; gap: 8px; font-size: 13.5px; margin-bottom: 3px; }
+        .feature span { font-size: 12.5px; color: var(--muted); }
+        .tips { margin: 0; padding-left: 18px; color: #cbd5e1; font-size: 13.5px; }
+        .tips li { margin-bottom: 4px; }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 1080px) {
+            .main-grid { grid-template-columns: 1fr; }
+            .viz-grid { grid-template-columns: 1fr 1fr; }
+            .viz.traj { grid-column: 1 / -1; }
+        }
+        @media (max-width: 720px) {
+            .container { padding: 16px 12px 32px; }
+            .topbar-inner { padding: 10px 12px; gap: 10px; }
+            .pill.private, .brand-sub { display: none; }
+            .icon-btn span { display: none; }
+            .icon-btn { padding: 0 11px; }
+            #hrVal { font-size: 52px; }
+            .session { grid-template-columns: repeat(2, 1fr); }
+            .viz-grid { grid-template-columns: 1fr; }
+            .viz-cell { height: 200px; }
+            .features { grid-template-columns: 1fr; }
+            .hud { left: 54px; right: 54px; }
+            .idle-overlay { padding: 52px 16px 16px; gap: 8px; }
+            .idle-overlay .ring { width: 52px; height: 52px; font-size: 20px; }
+        }
+        @media (max-width: 480px) {
+            .idle-overlay { padding: 48px 14px 12px; gap: 4px; }
+            .idle-overlay .ring { display: none; }
+            body.is-paused .idle-overlay .t1 { font-size: 16px; }
+            .idle-overlay .t2, body.is-paused .idle-overlay .t2 { font-size: 12px; }
+            .card-head { flex-wrap: wrap; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .beating .heart-icon, .beating .ripple, .hud-chip.live .dot, .status-pill.measuring .status-dot::after { animation: none; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">
+            <div class="logo"><i class="fa-solid fa-heart-pulse"></i></div>
+            <div class="brand-text">
+                <div class="brand-name"><span>PulseLens</span></div>
+                <div class="brand-sub">Contactless heart-rate monitoring from a webcam</div>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <div class="pill private"><i class="fa-solid fa-shield-halved"></i>On-device · zero data upload</div>
+            <div class="pill status-pill" id="statusPill"><span class="status-dot"></span><span id="statusText">Idle</span></div>
+            <button class="icon-btn" id="fsBtn" type="button" title="Toggle fullscreen"><i class="fa-solid fa-expand" id="fsIcon"></i><span>Fullscreen</span></button>
+            <button class="icon-btn" id="aboutBtn" type="button" title="About PulseLens"><i class="fa-solid fa-circle-info"></i><span>About</span></button>
+        </div>
+    </div>
+</header>
+
+<video id="videoInput" playsinline muted style="display:none"></video>
+
+<main class="container">
+    <div class="main-grid">
+        <!-- Left: camera + waveform -->
+        <div class="col">
+            <section class="card camera-card">
+                <div id="video-frame">
+                    <canvas id="previewCanvas" class="display-layer"></canvas>
+                    <canvas id="overlayCanvas" class="display-layer"></canvas>
+                    <div class="bracket tl"></div><div class="bracket tr"></div>
+                    <div class="bracket bl"></div><div class="bracket br"></div>
+                    <div class="hud">
+                        <div class="hud-chip" id="liveChip"><span class="dot"></span><span id="liveText">STANDBY</span></div>
+                        <div class="hud-chip"><i class="fa-regular fa-clock"></i><span id="sessionTimer">00:00</span></div>
+                    </div>
+                    <div class="idle-overlay">
+                        <div class="off-view">
+                            <div class="ring"><i class="fa-solid fa-video"></i></div>
+                            <div class="t1">Camera is off</div>
+                            <div class="t2">Press Start below. Face the camera in good, even light and keep still for about 10 seconds.</div>
+                        </div>
+                        <div class="paused-view">
+                            <div class="ring pause"><i class="fa-solid fa-pause"></i></div>
+                            <div class="t1">Paused</div>
+                            <div class="t2">The camera stops when this tab is hidden. Press Resume to continue.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wave-head">
+                    <div class="card-title"><i class="fa-solid fa-wave-square i-heart"></i>Pulse waveform (BVP)</div>
+                    <div class="spacer" style="flex:1"></div>
+                    <span class="eyebrow">live</span>
+                </div>
+                <div id="wave-frame">
+                    <button id="largeStartBtn" disabled>Loading System...</button>
+                    <canvas id="plotCanvas"></canvas>
+                </div>
+            </section>
+        </div>
+
+        <!-- Right: metrics -->
+        <div class="col">
+            <section class="card hero" id="heroCard">
+                <div class="card-head">
+                    <div class="card-title"><i class="fa-solid fa-heart i-heart"></i>Heart rate</div>
+                    <div class="spacer"></div>
+                    <button class="reset-btn" id="resetBtn" type="button" title="Clear session stats and timer"><i class="fa-solid fa-rotate-left"></i>Reset</button>
+                    <span class="tip" tabindex="0" data-tip="Your heart rate in beats per minute. Each heartbeat changes the colour of your skin very slightly; the model picks up that tiny change from the camera. A number only shows when the signal is reliable.">?</span>
+                </div>
+                <div class="hero-body" id="heartBox">
+                    <div class="heart-wrap">
+                        <div class="glow"></div>
+                        <div class="ripple"></div>
+                        <i class="fa-solid fa-heart heart-icon"></i>
+                    </div>
+                    <div class="bpm-block">
+                        <div class="bpm-line">
+                            <span id="hrVal" class="stat-val">--</span>
+                            <span class="bpm-unit">BPM</span>
+                        </div>
+                        <div class="zone" id="zoneBadge"><span class="zdot"></span><span id="zoneText">Waiting for signal</span></div>
+                    </div>
+                </div>
+                <div class="session">
+                    <div><b id="sMin">--</b><span>Min</span></div>
+                    <div><b id="sAvg">--</b><span>Avg</span></div>
+                    <div><b id="sMax">--</b><span>Max</span></div>
+                    <div><b id="sHrv">--</b><span>HRV*</span></div>
+                </div>
+                <div class="footnote">*HRV here is the standard deviation of this session's heart-rate readings (in BPM), a rough variability indicator, not a clinical beat-to-beat HRV.</div>
+            </section>
+
+            <div class="tiles">
+                <section class="card tile" id="sqiTile">
+                    <div class="tile-head">
+                        <div class="tile-label"><i class="fa-solid fa-signal i-green"></i>Signal quality</div>
+                        <span class="tip" tabindex="0" data-tip="Signal quality index (SQI) from 0 to 1: how clean the pulse signal is. Above 0.6 is good. Movement, talking, or dim and flickering light lower it.">?</span>
+                    </div>
+                    <div class="tile-val"><span id="sqiVal" class="stat-val">0.00</span></div>
+                    <div class="sqi-bar"><div class="sqi-fill" id="sqiFill"></div></div>
+                    <div class="sqi-text" id="sqiText">No signal yet</div>
+                </section>
+                <section class="card tile">
+                    <div class="tile-head"><div class="tile-label"><i class="fa-solid fa-bolt i-violet"></i>Latency</div></div>
+                    <div class="tile-val"><span id="latencyVal" class="stat-val">0.0</span></div>
+                    <div class="sqi-text">Model time per frame</div>
+                </section>
+                <section class="card tile">
+                    <div class="tile-head"><div class="tile-label"><i class="fa-solid fa-gauge-high i-cyan"></i>FPS</div></div>
+                    <div class="tile-val"><span id="fpsVal" class="stat-val">0</span></div>
+                    <div class="sqi-text">Frames processed / second</div>
+                </section>
+                <section class="card tile">
+                    <div class="tile-head"><div class="tile-label"><i class="fa-solid fa-film i-heart"></i>Frames</div></div>
+                    <div class="tile-val"><span id="frameVal" class="stat-val">0</span></div>
+                    <div class="sqi-text">Total this session</div>
+                </section>
+            </div>
+
+            <section class="card">
+                <div class="card-head">
+                    <div class="card-title"><i class="fa-solid fa-chart-area i-cyan"></i>Frequency spectrum (PSD)</div>
+                    <div class="spacer"></div>
+                    <span class="tip" tabindex="0" data-tip="Shows which pulse frequencies are strongest in the last few seconds of signal. The highest peak is your heart rate: peak Hz × 60 = BPM (e.g. 1.20 Hz × 60 = 72 BPM).">?</span>
+                </div>
+                <div id="psd-frame" class="well">
+                    <canvas id="psdCanvas"></canvas>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Inside the model -->
+    <section class="card section">
+        <div class="card-head">
+            <div class="card-title"><i class="fa-solid fa-brain i-violet"></i>Inside the model</div>
+            <span class="tip" tabindex="0" data-tip="A live look at the neural network. Face ROI is the small face patch fed to the model. Attention map shows which skin areas a layer focuses on. Heart state trajectory plots the model's internal state; a steady loop means a steady pulse. Use the tabs to switch layers.">?</span>
+            <div class="spacer"></div>
+            <div class="layer-tabs">
+                <div class="layer-btn active" data-layer="0">SSM 1</div>
+                <div class="layer-btn" data-layer="1">SSM 2</div>
+                <div class="layer-btn" data-layer="2">SSM 3</div>
+                <div class="layer-btn" data-layer="3">SSM 4</div>
+                <div class="layer-btn" data-layer="4">Projection</div>
+            </div>
+        </div>
+        <div class="viz-grid">
+            <div class="viz">
+                <div class="viz-label"><i class="fa-solid fa-crop-simple i-cyan"></i>Face ROI</div>
+                <div class="well viz-cell"><canvas id="cropDisplayCanvas"></canvas></div>
+            </div>
+            <div class="viz">
+                <div class="viz-label"><i class="fa-solid fa-fire i-heart"></i>Attention map</div>
+                <div class="well viz-cell"><canvas id="heatmapCanvas"></canvas></div>
+            </div>
+            <div class="viz traj">
+                <div class="viz-label"><i class="fa-solid fa-route i-violet"></i>Heart state trajectory</div>
+                <div class="well viz-cell"><canvas id="trajCanvas"></canvas></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trend -->
+    <section class="card section">
+        <div class="card-head">
+            <div class="card-title"><i class="fa-solid fa-chart-line i-heart"></i>Heart-rate trend · last 5 minutes</div>
+            <div class="spacer"></div>
+            <button id="saveBtn" type="button"><i class="fa-solid fa-file-zipper"></i>Export data <small>.zip</small></button>
+        </div>
+        <div class="trend-row">
+            <div class="trend-y-axis">
+                <span class="axis-label" style="bottom: 71.4%">140</span>
+                <span class="axis-label" style="bottom: 42.8%">100</span>
+                <span class="axis-label" style="bottom: 14.2%">60</span>
+            </div>
+            <div id="trend-container" class="well">
+                <canvas id="trendCanvas"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <div class="page-foot">PulseLens is a technology demo, not a medical device. All processing happens in your browser.</div>
+</main>
+
+<!-- About modal -->
+<div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <div class="modal-box">
+        <div class="modal-head">
+            <div class="logo"><i class="fa-solid fa-heart-pulse"></i></div>
+            <h2 id="aboutTitle">About PulseLens</h2>
+            <button class="modal-close" id="aboutClose" type="button" aria-label="Close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p>PulseLens uses <strong>remote photoplethysmography (rPPG)</strong>. Every heartbeat pushes a little more blood into the skin of your face, which changes its colour by an amount far too small to see. A normal webcam can pick up that change, and from its rhythm we can work out your heart rate without touching you.</p>
+        <p>The signal is read by a lightweight <strong>state-space model (SSM)</strong>, a neural network built to follow signals that change over time. It is only about <strong>4 MB</strong>, takes a few milliseconds per frame and runs entirely in your browser. No video ever leaves your device.</p>
+
+        <h3>How it works</h3>
+        <div class="pipeline">
+            <span class="step"><i class="fa-solid fa-video"></i>Webcam</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step"><i class="fa-solid fa-face-smile"></i>Face detection</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step"><i class="fa-solid fa-crop-simple"></i>Face ROI crop</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step hl"><i class="fa-solid fa-brain"></i>SSM neural network</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step"><i class="fa-solid fa-wave-square"></i>Pulse wave (BVP)</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step"><i class="fa-solid fa-chart-area"></i>Spectrum (PSD)</span><i class="fa-solid fa-chevron-right arrow"></i>
+            <span class="step"><i class="fa-solid fa-heart"></i>BPM</span>
+        </div>
+
+        <h3>Features</h3>
+        <div class="features">
+            <div class="feature"><b><i class="fa-solid fa-bolt i-violet"></i>Real-time</b><span>Updates many times a second with millisecond-level model latency.</span></div>
+            <div class="feature"><b><i class="fa-solid fa-shield-halved i-green"></i>Private</b><span>Everything runs on your device. Zero video or data upload.</span></div>
+            <div class="feature"><b><i class="fa-solid fa-eye i-cyan"></i>Explainable</b><span>See the face crop, attention maps and internal heart state live.</span></div>
+            <div class="feature"><b><i class="fa-solid fa-signal i-heart"></i>Quality-aware</b><span>A signal-quality score hides readings when the signal is unreliable.</span></div>
+        </div>
+
+        <h3>Tips for an accurate reading</h3>
+        <ul class="tips">
+            <li>Use bright, even light on your face; avoid strong backlight and flickering lamps.</li>
+            <li>Sit still, look at the camera and avoid talking for 10–20 seconds.</li>
+            <li>Keep your whole face in the frame, about an arm's length from the camera.</li>
+            <li>Wait until Signal quality shows "Good" before trusting the number.</li>
+        </ul>
+    </div>
+</div>
+
+<script type="module" src="./main.js"></script>
+
+<!-- UI-only enhancements: this script only READS #hrVal, #sqiVal and #largeStartBtn; it never touches main.js state. -->
+<script>
+(function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var hrEl = $('hrVal'), sqiEl = $('sqiVal'), startBtn = $('largeStartBtn');
+    var heartBox = $('heartBox'), zoneBadge = $('zoneBadge'), zoneText = $('zoneText');
+    var readings = [];
+
+    // Heart rate: beating heart, zone, session stats
+    function onHr() {
+        var v = parseFloat(hrEl.textContent);
+        var isActive = hrEl.classList.contains('active');
+        var valid = isFinite(v) && v >= 40 && v <= 200 && isActive;
+        if (!valid) {
+            heartBox.classList.remove('beating');
+            zoneBadge.className = 'zone';
+            zoneText.textContent = measuring ? 'Searching for a clear signal…' : 'Waiting for signal';
+            return;
+        }
+        heartBox.style.setProperty('--beat', (60 / v).toFixed(3) + 's');
+        heartBox.classList.add('beating');
+        var z, t;
+        if (v < 60) { z = 'low'; t = 'Resting / low'; }
+        else if (v <= 100) { z = 'normal'; t = 'Normal resting range'; }
+        else if (v <= 130) { z = 'elevated'; t = 'Elevated'; }
+        else { z = 'high'; t = 'High'; }
+        zoneBadge.className = 'zone ' + z;
+        zoneText.textContent = t;
+
+        var sqiNow = parseFloat(sqiEl.textContent);
+        if (!(isFinite(sqiNow) && sqiNow >= 0.2)) return;
+        readings.push(v);
+        renderStats();
+    }
+    function renderStats() {
+        if (!readings.length) {
+            $('sMin').textContent = $('sAvg').textContent = $('sMax').textContent = $('sHrv').textContent = '--';
+            return;
+        }
+        var min = Infinity, max = -Infinity, sum = 0;
+        for (var i = 0; i < readings.length; i++) { var r = readings[i]; if (r < min) min = r; if (r > max) max = r; sum += r; }
+        var avg = sum / readings.length, sq = 0;
+        for (var j = 0; j < readings.length; j++) sq += (readings[j] - avg) * (readings[j] - avg);
+        $('sMin').textContent = Math.round(min);
+        $('sAvg').textContent = Math.round(avg);
+        $('sMax').textContent = Math.round(max);
+        $('sHrv').textContent = readings.length > 1 ? Math.sqrt(sq / readings.length).toFixed(1) : '--';
+    }
+    new MutationObserver(onHr).observe(hrEl, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+
+    // Signal quality bar
+    var sqiTile = $('sqiTile'), sqiFill = $('sqiFill'), sqiText = $('sqiText');
+    function onSqi() {
+        var q = parseFloat(sqiEl.textContent);
+        if (!isFinite(q)) q = 0;
+        q = Math.max(0, Math.min(1, q));
+        sqiFill.style.width = (q * 100).toFixed(0) + '%';
+        sqiTile.classList.remove('sqi-good', 'sqi-fair', 'sqi-poor');
+        if (!measuring && q === 0) { sqiText.textContent = 'No signal yet'; return; }
+        if (q >= 0.6) { sqiTile.classList.add('sqi-good'); sqiText.textContent = 'Good'; }
+        else if (q >= 0.35) { sqiTile.classList.add('sqi-fair'); sqiText.textContent = 'Fair'; }
+        else { sqiTile.classList.add('sqi-poor'); sqiText.textContent = 'Poor: hold still / add light'; }
+    }
+    new MutationObserver(onSqi).observe(sqiEl, { childList: true, characterData: true, subtree: true });
+
+    // Live status + session timer (derived from the start button's visibility)
+    var measuring = false, elapsed = 0, lastTick = 0, timerId = null;
+    var statusPill = $('statusPill'), statusText = $('statusText'), liveChip = $('liveChip'), liveText = $('liveText'), timerEl = $('sessionTimer');
+    function fmt(s) { s = Math.floor(s); var m = Math.floor(s / 60); return (m < 10 ? '0' : '') + m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60); }
+    function onBtn() {
+        var now = startBtn.style.display === 'none';
+        var paused = !now && startBtn.textContent.trim() === 'Resume';
+        document.body.classList.toggle('is-paused', paused);
+        if (now === measuring) return;
+        measuring = now;
+        document.body.classList.toggle('is-measuring', measuring);
+        statusPill.classList.toggle('measuring', measuring);
+        statusText.textContent = measuring ? 'Measuring' : 'Idle';
+        liveChip.classList.toggle('live', measuring);
+        liveText.textContent = measuring ? 'LIVE' : 'STANDBY';
+        if (measuring) {
+            lastTick = performance.now();
+            timerId = setInterval(function () {
+                var t = performance.now(); elapsed += (t - lastTick) / 1000; lastTick = t;
+                timerEl.textContent = fmt(elapsed);
+            }, 250);
+        } else {
+            clearInterval(timerId);
+            onHr();
+        }
+    }
+    new MutationObserver(onBtn).observe(startBtn, { attributes: true, attributeFilter: ['style', 'disabled'], childList: true, characterData: true, subtree: true });
+
+    // Reset session stats + timer
+    $('resetBtn').addEventListener('click', function () {
+        readings = [];
+        renderStats();
+        elapsed = 0;
+        lastTick = performance.now();
+        timerEl.textContent = fmt(0);
+    });
+
+    // Fullscreen
+    var fsIcon = $('fsIcon');
+    $('fsBtn').addEventListener('click', function () {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function () {});
+    });
+    document.addEventListener('fullscreenchange', function () {
+        fsIcon.className = document.fullscreenElement ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+    });
+
+    // About modal
+    var modal = $('aboutModal'), aboutBtn = $('aboutBtn');
+    function openModal() { modal.classList.add('open'); $('aboutClose').focus(); }
+    function closeModal() { modal.classList.remove('open'); aboutBtn.focus(); }
+    aboutBtn.addEventListener('click', openModal);
+    $('aboutClose').addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('open')) closeModal(); });
+})();
+</script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then((registration) => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch((err) => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
+</script>
+</body>
+</html>
