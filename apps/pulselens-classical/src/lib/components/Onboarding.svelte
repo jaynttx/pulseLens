@@ -9,8 +9,8 @@
 <div class="fixed inset-0 flex flex-col items-center justify-center bg-bg-primary">
   <div class="flex flex-col items-center gap-10 px-6 max-w-sm text-center">
     <div class="flex flex-col items-center gap-2">
-      <h1 class="text-3xl font-semibold text-text-primary">pulse</h1>
-      <p class="text-text-secondary text-sm">See your heartbeat</p>
+      <h1 class="text-3xl font-semibold text-text-primary">PulseLens Classical</h1>
+      <p class="text-text-secondary text-sm">Signal-processing baseline (POS)</p>
     </div>
 
     <button

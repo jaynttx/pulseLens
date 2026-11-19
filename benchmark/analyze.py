@@ -1,11 +1,11 @@
 """
-Benchmark: deep rPPG (FacePhys) vs classical rPPG (POS / pulse)
+Benchmark: PulseLens Deep (SSM) vs PulseLens Classical (POS)
 against a reference heart-rate reading (smartwatch / phone PPG).
 
 The two apps cannot share the webcam, so they are run one at a time and
 each has its own reference reading:
-    FacePhys error = facephys_bpm - ref_facephys_bpm
-    pulse error    = pulse_bpm    - ref_pulse_bpm
+    deep error      = facephys_bpm - ref_facephys_bpm
+    classical error = pulse_bpm    - ref_pulse_bpm
 A row may have only one method filled in.
 
 Usage:
@@ -32,8 +32,8 @@ HERE = Path(__file__).resolve().parent
 OUT = HERE / "output"
 # estimate column -> (reference column, display name)
 METHODS = {
-    "facephys_bpm": ("ref_facephys_bpm", "FacePhys (deep SSM)"),
-    "pulse_bpm": ("ref_pulse_bpm", "pulse (classical POS)"),
+    "facephys_bpm": ("ref_facephys_bpm", "PulseLens Deep (SSM)"),
+    "pulse_bpm": ("ref_pulse_bpm", "PulseLens Classical (POS)"),
 }
 COLORS = ["#5b5bd6", "#e5484d"]
 

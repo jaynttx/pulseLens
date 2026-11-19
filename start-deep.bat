@@ -1,8 +1,8 @@
 @echo off
-REM Starts the FacePhys (deep learning) demo at http://localhost:8001
-cd /d "%~dp0apps\facephys-deep"
+REM Starts PulseLens Deep (state-space model) at http://localhost:8001
+cd /d "%~dp0apps\pulselens-deep"
 echo.
-echo  FacePhys running at:  http://localhost:8001
+echo  PulseLens Deep running at:  http://localhost:8001
 echo  Press Ctrl+C to stop.
 echo.
 start "" http://localhost:8001

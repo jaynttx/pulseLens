@@ -1,4 +1,4 @@
-# How it works
+# How PulseLens works
 
 ## 1. The physics: why a camera can see your pulse
 
@@ -21,8 +21,8 @@ Average R, G, B over skin pixels  ──►  3 numbers per frame = a "colour tra
    │
    ▼
 Pulse extraction  ◄── this is where the two methods differ
-   │                 classical: POS formula
-   │                 deep: state-space neural network
+   │                 PulseLens Classical: POS formula
+   │                 PulseLens Deep: state-space neural network
    ▼
 Blood-volume-pulse waveform
    │
@@ -33,9 +33,9 @@ Bandpass 0.67–3.33 Hz (= 40–200 bpm)  ──►  removes lighting drift + no
 FFT / power spectral density  ──►  highest peak frequency × 60 = heart rate
 ```
 
-## 3. Classical method: POS (`apps/pulse-classical`)
+## 3. PulseLens Classical: POS (`apps/pulselens-classical`)
 
-**Paper:** W. Wang, A. C. den Brinker, S. Stuijk, G. de Haan, *"Algorithmic Principles of Remote PPG"*, IEEE TBME, 2017. POS = **Plane-Orthogonal-to-Skin**. It improves on the earlier CHROM method (de Haan & Jeanne, 2013), which comes from the same group. pulse's README says CHROM, but the code (`computePosPulse()` in `rppg.ts`) implements POS.
+**Paper:** W. Wang, A. C. den Brinker, S. Stuijk, G. de Haan, *"Algorithmic Principles of Remote PPG"*, IEEE TBME, 2017. POS = **Plane-Orthogonal-to-Skin**. PulseLens Classical uses POS, implemented in `computePosPulse()` in `rppg.ts`. POS improves on the earlier CHROM method (de Haan & Jeanne, 2013) from the same group.
 
 **Idea:** brightness changes caused by lighting or movement scale R, G and B **together**, along the "skin-tone direction". The pulse changes them **differently**, mostly green. POS projects the colour onto a plane **orthogonal to the skin tone**, so the shared change cancels out and the pulse remains.
 
@@ -73,9 +73,9 @@ If they agree within 10%, they're averaged. Otherwise the more confident one win
 - **Parabolic interpolation:** estimate the peak between FFT bins for finer resolution.
 - **Kalman filter:** tracks [rate, rate-change] over time. It trusts high-quality measurements more and rejects outliers beyond 3σ, so the number doesn't jump around.
 
-## 4. Deep method: FacePhys (`apps/facephys-deep`)
+## 4. PulseLens Deep: state-space model (`apps/pulselens-deep`)
 
-**Paper:** Wang, Tang, Wang, Liu, Fan, Ji, Shi, McDuff, *"FacePhys: State of the Heart Learning"*, arXiv:2512.06275, 2025. Reports a 49% error reduction over prior methods, a 3.6 MB memory footprint and 9.46 ms per-frame latency (the authors' own claims).
+**Model:** PulseLens Deep uses the pretrained FacePhys state-space model. Paper: Wang et al., *"FacePhys: State of the Heart Learning"*, arXiv:2512.06275, 2025. Reports a 49% error reduction over prior methods, a 3.6 MB memory footprint and 9.46 ms per-frame latency (the authors' own claims).
 
 **Idea:** instead of a hand-designed formula like POS, a neural network **learns** from labelled videos (faces recorded alongside a contact pulse sensor) how to turn face pixels into the pulse wave. It learns to ignore motion, lighting and shadows on its own.
 
@@ -83,22 +83,22 @@ If they agree within 10%, they're averaged. Otherwise the more confident one win
 - An SSM keeps a small **hidden state** (a memory vector) and updates it every frame: `h_t = A·h_{t-1} + B·x_t`, `y_t = C·h_t`.
 - The cost per frame is **constant**. A transformer would have to look back over *all* past frames, so it gets slower and uses more memory as time goes on.
 - This is why a ~4 MB model runs in real time in a browser.
-- FacePhys models the heart dynamics as continuous-time equations, so it copes with irregular frame timing (dropped frames).
+- The model treats the heart dynamics as continuous-time equations, so it copes with irregular frame timing (dropped frames).
 
 **What the UI panels show:**
 
 | Panel | Meaning |
 |---|---|
-| **HR (BPM)** | Estimated heart rate |
-| **SQI** | Signal Quality Index, 0–1, from a separate small model (`sqi_model.tflite`). Higher = more trustworthy. |
+| **Heart rate** | Estimated heart rate, zone badge and session Min/Avg/Max/HRV* |
+| **Signal quality** | Signal Quality Index, 0–1, from a separate small model (`sqi_model.tflite`). Higher = more trustworthy. |
 | **Latency / FPS** | Inference time per frame / frames per second |
-| **ROI** | The cropped face the model sees |
-| **ATTN** | Attention heatmap: red = the skin regions the model relies on most (usually forehead and cheeks, not eyes or hair) |
-| **Heart State** | The model's hidden state projected to 3D (`proj.tflite`). It loops because the heartbeat repeats. |
-| **SSM1–4 / PROJ** | Switch which hidden-state layer is shown |
-| **Top-left spectrum** | Power spectral density of the pulse. The peak in Hz × 60 = BPM. |
-| **Green waveform** | The predicted blood volume pulse (BVP) |
-| **HR TREND** | Heart rate over the last 5 minutes |
+| **Face ROI** | The cropped face the model sees |
+| **Attention map** | Attention heatmap: red = the skin regions the model relies on most (usually forehead and cheeks, not eyes or hair) |
+| **Heart state trajectory** | The model's hidden state projected to 2D (`proj.tflite`). It loops because the heartbeat repeats. |
+| **SSM 1–4 / Projection** | Switch which hidden-state layer is shown |
+| **Frequency spectrum (PSD)** | Power spectral density of the pulse. The peak in Hz × 60 = BPM. |
+| **Pulse waveform (BVP)** | The predicted blood volume pulse |
+| **Heart-rate trend** | Heart rate over the last 5 minutes |
 
 **Where it is in the code:**
 
@@ -113,9 +113,9 @@ If they agree within 10%, they're averaged. Otherwise the more confident one win
 
 **Web Workers:** inference, PSD and plotting each run in a separate background thread, so the video never freezes.
 
-## 5. Classical vs deep: summary
+## 5. PulseLens Classical vs PulseLens Deep: summary
 
-| | POS (classical) | FacePhys (deep SSM) |
+| | PulseLens Classical (POS) | PulseLens Deep (SSM) |
 |---|---|---|
 | Needs training data? | No, it's a fixed formula | Yes, labelled face videos |
 | Explainable? | Fully: each step is maths | Partly: attention map and hidden state help |
@@ -141,13 +141,13 @@ Frequency resolution = 1 / window length. A 10 s window gives 0.1 Hz bins = 6 bp
 It normalises R, G and B, then projects them onto a plane orthogonal to the skin-tone direction (S1 = G−B, S2 = G+B−2R) and mixes them as h = S1 + α·S2. Changes that scale all channels together (lighting, motion) cancel out, and the pulse remains.
 
 **POS vs CHROM?**
-Both come from the same Philips/TU Eindhoven group. CHROM (2013) uses fixed colour-difference signals. POS (2017) derives its projection plane from first principles (orthogonal to skin tone), which makes it more robust. pulse's README says CHROM, but its code implements POS.
+Both come from the same Philips/TU Eindhoven group. CHROM (2013) uses fixed colour-difference signals. POS (2017) derives its projection plane from first principles (orthogonal to skin tone), which makes it more robust. PulseLens Classical uses POS.
 
 **Why a state-space model instead of a CNN or transformer?**
 It carries a fixed-size hidden state, so cost per frame is constant and memory is tiny. That allows real-time streaming in a browser. A transformer's cost grows with sequence length.
 
 **Did you train the model?**
-No. We used the authors' pretrained FacePhys model. Our work is the comparison against a classical baseline and a reference sensor, under controlled conditions.
+No. PulseLens Deep uses the authors' pretrained FacePhys model. Our work is the comparison against a classical baseline and a reference sensor, under controlled conditions.
 
 **What datasets are used for rPPG?**
 Face videos with a synchronised contact pulse sensor, e.g. UBFC-rPPG, PURE, RLAP.
@@ -168,7 +168,7 @@ The skin regions the model weights most when predicting the pulse. It should foc
 Signal Quality Index, a confidence score. Low SQI means don't trust the reading (e.g. you moved).
 
 **Is this medical-grade?**
-No. It's a research demo, and smartwatches are only approximate references themselves.
+No. It's a research project, and smartwatches are only approximate references themselves.
 
 **Real-world uses?**
 Telehealth check-ups, driver drowsiness and stress monitoring, neonatal monitoring without wires, and fitness apps.

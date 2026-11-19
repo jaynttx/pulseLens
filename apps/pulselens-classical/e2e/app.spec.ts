@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('pulse app', () => {
   test('landing page shows title and start button', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h1')).toHaveText('pulse');
+    await expect(page.locator('h1')).toHaveText('PulseLens Classical');
     await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
   });
 
