@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#070b16">
+    <meta name="theme-color" content="#eee5fa">
     <link rel="apple-touch-icon" href="./resource/icon-192.png">
     <title>PulseLens</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -544,6 +544,50 @@
             .beating .heart-icon, .beating .ripple, .hud-chip.live .dot, .status-pill.measuring .status-dot::after { animation: none; }
         }
     </style>
+<style id="jaynttx-lavender-theme">
+/* Presentation only. Original application and model pipelines are unchanged. */
+:root {
+  --bg: #fbf8f1; --bg-2: #f4eefb; --card: #ffffff; --well: #f1eaf8;
+  --border: #e4dced; --border-strong: #cbb9de; --text: #3b304c;
+  --muted: #7c6b8e; --dim: #94849f; --heart: #9871bb; --cyan: #7e69b2;
+  --violet: #b399d0; --green: #4f8b72; --amber: #af843d;
+  --shadow: 0 8px 32px -12px rgba(107, 76, 135, .16), 0 1px 0 #fff inset;
+}
+html { color-scheme: light; }
+body { background-color: var(--bg); background-image: radial-gradient(900px 650px at 0% 0%, #eee5fa 0, transparent 70%), radial-gradient(800px 700px at 100% 100%, #f7eedc 0, transparent 70%); }
+.topbar { background: rgba(255,255,255,.94); }
+.brand-name span { background: linear-gradient(90deg,#71518f,#aa86c7); background-clip:text; -webkit-background-clip:text; }
+.logo { background: linear-gradient(135deg,#9b77bd,#c4aedc); box-shadow:0 6px 20px -4px #a98ac84d; }
+.pill,.icon-btn,.tip,.feature,.step { background:#f5f0fa; }
+.icon-btn:hover,.reset-btn:hover,.modal-close:hover { background:#ede3f7; color:#72538d; border-color:#baa0d1; }
+.status-pill.measuring { color:#785297; border-color:#c8b0df; background:#f0e6fa; }
+.hero { background:radial-gradient(420px 220px at 100% 0%,#eee3f8,transparent 70%),#fff; }
+.session div { background:#f8f4ed; border-color:#e9dfce; }
+.heart-icon { color:#d1bfdf; }
+.beating .heart-icon { filter:drop-shadow(0 6px 18px #a17ac54d); }
+.heart-wrap .glow { background:radial-gradient(circle,#c6a9df70,transparent 70%); }
+#video-frame { background:radial-gradient(circle at 50% 45%,#f8f4fc,#e9dff3 75%); }
+.bracket { border-color:#b399ce; }
+.hud-chip { background:rgba(249,246,253,.88); color:#7e6991; border-color:#e2d4ed; }
+.hud-chip.live { color:#71518f; border-color:#bda0d3; }
+.idle-overlay .ring { background:#eee4f8; border-color:#baa1d0; color:#9670b5; }
+.tip::after { background:#fffaf3; color:#584565; box-shadow:0 12px 30px #76568f1f; }
+#largeStartBtn { background:linear-gradient(135deg,#9872b7,#b99dd0); box-shadow:0 10px 30px -6px #a285bf66; }
+#largeStartBtn:hover:not(:disabled) { box-shadow:0 14px 36px -6px #a285bf80; }
+#largeStartBtn:disabled { background:linear-gradient(135deg,#ebe1f5,#f6f0e5); color:#9983ac; }
+#saveBtn { background:#eee5f8; border-color:#c8b0df; color:#795496; }
+#saveBtn:hover { background:#e5d7f2; border-color:#b99bd0; }
+.layer-tabs { background:#f0e8f7; border-color:#dfd0eb; }
+.layer-btn.active { color:#fff; background:linear-gradient(135deg,#9872b7,#b89bd0); box-shadow:0 0 0 1px #b99bd0 inset; }
+.layer-btn:hover { background:#e7dbf2; }
+.modal { background:rgba(91,70,112,.3); }
+.modal-box { background:linear-gradient(180deg,#fff,#fbf8f1); box-shadow:0 30px 80px #76568f40; }
+.modal-box p,.tips { color:#786389; }
+.step.hl { background:linear-gradient(135deg,#ede1f8,#f9f1e2); border-color:#c9afd9; }
+.step.hl i { color:#9270ae; }
+.card-title,.viz-label,.tile-label,.eyebrow,.pill,.footnote,.session span,.axis-label,.sqi-text,.page-foot { font-size:max(12px, .8rem); }
+
+</style>
 </head>
 <body>
 
